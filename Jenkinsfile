@@ -41,7 +41,7 @@ pipeline {
           passwordVariable: 'AWS_SECRET_ACCESS_KEY'
         )]) {
           input message: "Are you sure you want to destroy the infrastructure?", ok: "Yes, destroy"
-          bat 'terraform destroy -auto-approve -var-file=terraform.tfvars'
+          bat 'terraform destroy -auto-approve -var-file=terraform.tfvars > destroy.log 2>&1'
         }
       }
     }
@@ -53,6 +53,10 @@ pipeline {
     }
     failure {
       echo "❌ Terraform destroy failed. Check logs for more details."
+    }
+    always {
+      // Archive the destroy logs
+      archiveArtifacts artifacts: 'destroy.log', allowEmptyArchive: true
     }
   }
 }
