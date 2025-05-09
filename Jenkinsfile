@@ -49,10 +49,10 @@ pipeline {
 
   post {
     success {
-      echo "✅ Infrastructure deployed successfully!"
+      echo "Infrastructure deployed successfully!"
     }
     failure {
-      echo "❌ Deployment failed—check logs for errors."
+      echo "Deployment failed - check logs for errors."
     }
     always {
       archiveArtifacts artifacts: '**/*.tf', fingerprint: true
