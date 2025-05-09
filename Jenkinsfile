@@ -2,10 +2,8 @@ pipeline {
   agent any
 
   environment {
-    // Inject AWS credentials stored under ID 'aws-creds'
-    AWS_ACCESS_KEY_ID     = credentials('aws-creds').username
-    AWS_SECRET_ACCESS_KEY = credentials('aws-creds').password
-    AWS_DEFAULT_REGION    = 'ap-south-1'
+    // Static environment vars
+    AWS_DEFAULT_REGION = 'ap-south-1'
   }
 
   stages {
@@ -20,29 +18,42 @@ pipeline {
       }
     }
 
-    stage('Terraform Init') {
+    stage('Terraform Init & Validate') {
       steps {
-        sh 'terraform init'
-      }
-    }
-
-    stage('Terraform Validate') {
-      steps {
-        sh 'terraform validate'
+        // Inject AWS creds into env for Terraform
+        withCredentials([usernamePassword(
+          credentialsId: 'aws-creds',
+          usernameVariable: 'AWS_ACCESS_KEY_ID',
+          passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+        )]) {
+          sh 'terraform init'
+          sh 'terraform validate'
+        }
       }
     }
 
     stage('Terraform Plan') {
       steps {
-        sh 'terraform plan -var-file=terraform.tfvars -out=tfplan.out'
+        withCredentials([usernamePassword(
+          credentialsId: 'aws-creds',
+          usernameVariable: 'AWS_ACCESS_KEY_ID',
+          passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+        )]) {
+          sh 'terraform plan -var-file=terraform.tfvars -out=tfplan.out'
+        }
       }
     }
 
     stage('Terraform Apply') {
       steps {
-        // Optional manual confirmation before applying
-        input message: "Apply Terraform plan?", ok: "Yes, apply"
-        sh 'terraform apply -auto-approve tfplan.out'
+        withCredentials([usernamePassword(
+          credentialsId: 'aws-creds',
+          usernameVariable: 'AWS_ACCESS_KEY_ID',
+          passwordVariable: 'AWS_SECRET_ACCESS_KEY'
+        )]) {
+          input message: "Apply Terraform plan?", ok: "Yes, apply"
+          sh 'terraform apply -auto-approve tfplan.out'
+        }
       }
     }
   }
