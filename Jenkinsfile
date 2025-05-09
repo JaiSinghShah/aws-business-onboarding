@@ -1,14 +1,18 @@
 pipeline {
   agent any
 
+  tools {
+    terraform 'Terrform' // This must match the Terraform tool name in Jenkins
+  }
+
   environment {
     AWS_DEFAULT_REGION = 'ap-south-1'
+    PATH = "${tool 'Terrform'};${env.PATH}"
   }
 
   stages {
     stage('Checkout Terraform Code') {
       steps {
-        // Pull from Git using credential ID 'aws-business-onboarding'
         git(
           url: 'https://github.com/JaiSinghShah/aws-business-onboarding.git',
           branch: 'main',
@@ -17,41 +21,27 @@ pipeline {
       }
     }
 
-    stage('Terraform Init & Validate') {
+    stage('Terraform Init') {
       steps {
-        // Inject AWS creds into env for Terraform
         withCredentials([usernamePassword(
           credentialsId: 'aws-creds',
           usernameVariable: 'AWS_ACCESS_KEY_ID',
           passwordVariable: 'AWS_SECRET_ACCESS_KEY'
         )]) {
           bat 'terraform init'
-          bat 'terraform validate'
         }
       }
     }
 
-    stage('Terraform Plan') {
+    stage('Terraform Destroy') {
       steps {
         withCredentials([usernamePassword(
           credentialsId: 'aws-creds',
           usernameVariable: 'AWS_ACCESS_KEY_ID',
           passwordVariable: 'AWS_SECRET_ACCESS_KEY'
         )]) {
-          bat 'terraform plan -var-file=terraform.tfvars -out=tfplan.out'
-        }
-      }
-    }
-
-    stage('Terraform Apply') {
-      steps {
-        withCredentials([usernamePassword(
-          credentialsId: 'aws-creds',
-          usernameVariable: 'AWS_ACCESS_KEY_ID',
-          passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-        )]) {
-          input message: "Apply Terraform plan?", ok: "Yes, apply"
-          bat 'terraform apply -auto-approve tfplan.out'
+          input message: "Are you sure you want to destroy the infrastructure?", ok: "Yes, destroy"
+          bat 'terraform destroy -auto-approve -var-file=terraform.tfvars'
         }
       }
     }
@@ -59,13 +49,10 @@ pipeline {
 
   post {
     success {
-      echo "Infrastructure deployed successfully!"
+      echo "✅ Terraform destroy completed successfully!"
     }
     failure {
-      echo "Deployment failed - check logs for errors."
-    }
-    always {
-      archiveArtifacts artifacts: '**/*.tf', fingerprint: true
+      echo "❌ Terraform destroy failed. Check logs for more details."
     }
   }
 }
