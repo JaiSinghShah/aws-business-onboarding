@@ -2,7 +2,6 @@ pipeline {
   agent any
 
   environment {
-    // Static environment vars
     AWS_DEFAULT_REGION = 'ap-south-1'
   }
 
@@ -26,8 +25,8 @@ pipeline {
           usernameVariable: 'AWS_ACCESS_KEY_ID',
           passwordVariable: 'AWS_SECRET_ACCESS_KEY'
         )]) {
-          sh 'terraform init'
-          sh 'terraform validate'
+          bat 'terraform init'
+          bat 'terraform validate'
         }
       }
     }
@@ -39,7 +38,7 @@ pipeline {
           usernameVariable: 'AWS_ACCESS_KEY_ID',
           passwordVariable: 'AWS_SECRET_ACCESS_KEY'
         )]) {
-          sh 'terraform plan -var-file=terraform.tfvars -out=tfplan.out'
+          bat 'terraform plan -var-file=terraform.tfvars -out=tfplan.out'
         }
       }
     }
@@ -52,7 +51,7 @@ pipeline {
           passwordVariable: 'AWS_SECRET_ACCESS_KEY'
         )]) {
           input message: "Apply Terraform plan?", ok: "Yes, apply"
-          sh 'terraform apply -auto-approve tfplan.out'
+          bat 'terraform apply -auto-approve tfplan.out'
         }
       }
     }
