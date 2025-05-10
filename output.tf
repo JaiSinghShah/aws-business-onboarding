@@ -1,11 +1,11 @@
-output "vpc_ids" {
-  value = { for k, v in aws_vpc.business_vpc : k => v.id }
+output "instance_id" {
+  value = aws_instance.my_ec2.id
 }
 
-output "subnet_ids" {
-  value = { for k, v in aws_subnet.public_subnet : k => v.id }
+output "public_ip" {
+  value = aws_instance.my_ec2.public_ip
 }
 
-output "security_group_ids" {
-  value = { for k, v in aws_security_group.business_sg : k => v.id }
+output "web_url" {
+  value = "http://${aws_instance.my_ec2.public_ip}"
 }
