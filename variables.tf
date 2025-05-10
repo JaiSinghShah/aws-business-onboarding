@@ -1,6 +1,9 @@
-variable "businesses" {
-  type = map(object({
-    vpc_cidr           = string
-    public_subnet_cidr = string
-  }))
+variable "aws_access_key" {
+  description = "AWS access key"
+  type        = string
+}
+
+variable "aws_secret_key" {
+  description = "AWS secret key"
+  type        = string
 }
